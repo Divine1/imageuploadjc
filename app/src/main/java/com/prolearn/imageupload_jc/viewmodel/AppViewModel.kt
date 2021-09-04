@@ -30,28 +30,26 @@ class AppViewModel : ViewModel{
     }
 
 
-    suspend fun uploadFile(uri : Uri?,filename : String,somedate:String){
+    suspend fun uploadFile(filename : String,file:File,somedate:String,contentType : String){
 
-        //uri.path
+
         Log.d("appdevelopment","AppViewModel uploadFile");
-        Log.d("appdevelopment",uri?.path!!);
-        Log.d("appdevelopment",uri?.toString()!!);
+        Log.d("appdevelopment","AppViewModel contentType ${contentType}");
 
-        var file :File = File(uri?.path!!)
-
-        var requestBody : RequestBody = RequestBody.create(MediaType.parse("image/*"),file);
+        //var requestBody : RequestBody = RequestBody.create(MediaType.parse("image/*"),file);
+        var requestBody : RequestBody = RequestBody.create(MediaType.parse(contentType),file);
 
         var parts : MultipartBody.Part = MultipartBody.Part.createFormData("avatar",filename,requestBody);
         var somedate : String = somedate
 
 
-        Log.d("appdevelopment",file.absolutePath);
+        Log.d("appdevelopment", " absolutePath ${file.absolutePath} ");
 
-        Log.d("appdevelopment",file.name);
+        Log.d("appdevelopment"," filename ${file.name}");
 
 
         try{
-            val responsedata =  appRepository.uploadFile(parts ,somedate );
+           val responsedata =  appRepository.uploadFile(parts ,somedate );
             Log.d("appdevelopment",responsedata.toString());
         }
         catch(httpException : HttpException){

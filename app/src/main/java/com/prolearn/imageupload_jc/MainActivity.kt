@@ -30,8 +30,9 @@ import com.prolearn.imageupload_jc.viewmodel.AppViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import android.provider.MediaStore
-
-
+import java.io.File
+import java.io.FileInputStream
+import java.io.FileOutputStream
 
 
 class MainActivity : ComponentActivity() {
@@ -48,6 +49,20 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+fun getFileName(uri : Uri,contentResolver : ContentResolver) : String{
+
+    val cursor : Cursor? = contentResolver.query(uri,null,null,null,null);
+    var filename:String="";
+    if(cursor?.moveToFirst() == true){
+        val nameIndex = cursor.getColumnIndex(MediaStore.MediaColumns.DISPLAY_NAME)
+        filename = cursor.getString(nameIndex);
+
+        cursor.close();
+    }
+
+    return filename;
+
+}
 @SuppressLint("UnrememberedMutableState")
 @Composable
 fun Greeting(name: String) {
@@ -82,45 +97,29 @@ fun Greeting(name: String) {
 
                 //render picked image in android app in android phone
                 val imageurl : Uri  = imageUri.value!!;
+                Log.d("appdevelopment","imageurl $imageurl");
 
-
-                    val type  = contentResolver.getType(imageurl)
+                val contentType  = contentResolver.getType(imageurl)
                 //image/jpeg
 
                 Log.d("appdevelopment","type!!");
+                Log.d("appdevelopment",contentType!!);
+                val fileName = getFileName(imageurl,contentResolver)
+                Log.d("appdevelopment","fileName $fileName");
 
-                Log.d("appdevelopment",type!!);
-                var fileName : String="";
-                val projection = arrayOf(MediaStore.MediaColumns.DISPLAY_NAME)
+                val parcelFileDescriptor = contentResolver.openFileDescriptor(imageurl,"r",null);
 
-                val metaCursor: Cursor? = contentResolver.query(imageurl, projection, null, null, null)
-                if (metaCursor != null) {
-                    try {
-                        if (metaCursor.moveToFirst()) {
-                            fileName = metaCursor.getString(0)
-                            var columnIndex = metaCursor.getColumnIndex(projection[0]);
-
-                            Log.d("appdevelopment","columnIndex $columnIndex")
-
-                            val picturePath: String = metaCursor.getString(columnIndex)
-                            Log.d("appdevelopment","picturePath $picturePath")
-
-                            // pexels-oliver-sjöström-1433052 (1).jpg
-                            Log.d("appdevelopment",fileName);
-
-                            Log.d("appdevelopment","columnNames");
-                            Log.d("appdevelopment",""+metaCursor.count);
+                val inputStream = FileInputStream(parcelFileDescriptor?.fileDescriptor);
+                val file = File(context.cacheDir,fileName);
+                val outputStream = FileOutputStream(file);
+                inputStream.copyTo(outputStream);
 
 
-                        }
-                    } finally {
-                        metaCursor.close()
-                    }
-                }
 
-
-                val resdata = appViewModel.uploadFile(imageUri.value,fileName,"divine");
+                val resdata = appViewModel.uploadFile(fileName,file,"divine",contentType);
                 Log.d("appdevelopment","received response in ui")
+
+
                 launchMutatestate.value="";
             }
         }
